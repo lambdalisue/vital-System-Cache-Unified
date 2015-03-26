@@ -1,0 +1,235 @@
+*vital-system-cache-base.txt*	An abstract class of unified cache system
+
+Version: 0.1.0
+Author:  Alisue <lambdalisue@hashnote.net>   *Vital.System.Cache.Base-author*
+Support: Vim 7.3 and above
+License: MIT license  {{{
+	Copyright (c) 2014 Alisue, hashnote.net
+
+	Permission is hereby granted, free of charge, to any person obtaining
+	a copy of this software and associated documentation files
+	(the "Software"), to deal in the Software without restriction,
+	including without limitation the rights to use, copy, modify, merge,
+	publish, distribute, sublicense, and/or sell copies of the Software,
+	and to permit persons to whom the Software is furnished to do so,
+	subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be
+	included in all copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+	EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+	MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+	IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+	CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+	TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}}}
+
+
+==============================================================================
+CONTENTS			*Vital.System.Cache.Base-contents*
+
+Introductions		|Vital.System.Cache.Base-intro|
+Usage			|Vital.System.Cache.Base-usage|
+Functions		|Vital.System.Cache.Base-funcs|
+Methods			|Vital.System.Cache.Base-methods|
+
+
+==============================================================================
+INTRODUCTIONS				*Vital.System.Cache.Base-intro*
+
+*Vital.System.Cache.Base* is an abstract class of unified cache system.
+The following variants are available.
+
+- |Vital.System.Cache.Dummy|  : A dummy cache system
+- |Vital.System.Cache.Simple| : An instance based cache system
+- |Vital.System.Cache.File|   : A file based cache system
+
+The variants above are available in https://github.com/lambdalisue/
+
+
+==============================================================================
+USAGE					*Vital.System.Cache.Base-usage*
+
+To create your own variants of unified cache system, follow the example code
+below:
+>
+	let s:Base = s:V.import('System.Cache.Base')
+	let s:base = { '_cached': {} }
+	function! s:base.has(name) abort
+	  return has_key(self._cached, a:name)
+	endfunction
+	function! s:base.get(name, ...) abort
+	  let default = get(a:000, 0, '')
+	  return get(self._cached, a:name, default)
+	endfunction
+	function! s:base.set(name, value) abort
+	  call self._cached[a:name] = a:value
+	endfunction
+	function! s:base.keys() abort
+	  return keys(self._cached)
+	endfunction
+	function! s:base.remove(name) abort
+	  if has_key(self._cached, a:name)
+	    unlet self._cached[a:name]
+	  endif
+	endfunction
+	function! s:base.clear() abort
+	  let self._cached = {}
+	endfunction
+
+	let s:factorial_cache = extend(s:Base.new(), deepcopy(s:base))
+	function! s:factorial(n)
+	  if a:n == 0
+	    return 1
+	  elseif s:factorial_cache.has(a:n)
+	    return s:factorial_cache.get(a:n)
+	  else
+	    let x = s:factorial(a:n - 1) * a:n
+	    call s:factorial_cache.set(a:n, x)
+	    return x
+	  endif
+	endfunction
+
+	echo s:factorial(10)
+<
+Or if you want to create the variants as a vital module, follow the example
+code below:
+>
+	function! s:_vital_loaded(V) dict abort " {{{
+	  let s:Base = a:V.import('System.Cache.Base')
+	endfunction " }}}
+	function! s:_vital_depends() abort " {{{
+	  return ['System.Cache.Base']
+	endfunction " }}}
+	
+	let s:base = { '_cached': {} }
+	function! s:new() " {{{
+	  return extend(s:Base.new(), deepcopy(s:base))
+	endfunction " }}}
+	
+	function! s:base.has(name) abort
+	  return has_key(self._cached, a:name)
+	endfunction
+	function! s:base.get(name, ...) abort
+	  let default = get(a:000, 0, '')
+	  return get(self._cached, a:name, default)
+	endfunction
+	function! s:base.set(name, value) abort
+	  call self._cached[a:name] = a:value
+	endfunction
+	function! s:base.keys() abort
+	  return keys(self._cached)
+	endfunction
+	function! s:base.remove(name) abort
+	  if has_key(self._cached, a:name)
+	    unlet self._cached[a:name]
+	  endif
+	endfunction
+	function! s:base.clear() abort
+	  let self._cached = {}
+	endfunction
+<
+
+==============================================================================
+FUNCTIONS				*Vital.System.Cache.Base-funcs*
+
+new()				*Vital.System.Cache.Base.new()*
+
+	Create a new instance of System.Cache.Base.
+
+hash({obj})			*Vital.System.Cache.Base.hash()*
+
+	Create a hashable |String| from {obj}.
+	The {obj} is first translated into |String| via |string| function if
+	it is not |String|.
+	The result string which length is more or equals to 150 will be then
+	translated into a hash string via |Vital.Data.String.hash()| function.
+	Otherwise ':', '/' and '\' in the string are substituted into '=-',
+	'=+', and '=+' respectively and returned.
+
+
+==============================================================================
+METHODS					*Vital.System.Cache.Base-methods*
+
+cache_key({obj})		*Vital.System.Cache.Base.cache_key()*
+
+	Return a |String| which will be used as a cache key.
+	User should override this method to translate non |String| object into
+	|String|, otherwise |Vital.System.Cache.Base.hash()| will be used to
+	translate non |String| object into |String|.
+
+	{obj} (required)
+	Any value if users override this method to translate {obj} to
+	|String|. Otherwise it translate {obj} into |String| via
+	|Vital.System.Cache.Base.hash()| function.
+
+has({name})			*Vital.System.Cache.Base.has()*
+
+	Return 1 if the cache instance has {name} in its cache dictionary.
+	Otherwise 0.
+	
+	VARIANTS MUST OVERRIDE THIS METHOD
+
+	{name} (required)
+	A name of the cache. An actual cache key SHOULD be created via
+	|Vital.System.Cache.Base.cache_key()| method thus {name} is not
+	required to be |String|.
+
+get({name}, [, {default}])	*Vital.System.Cache.Base.get()*
+
+	Return a cached value of {name} in a cache dictionary. It return
+	{default} if no value is found.
+
+	VARIANTS MUST OVERRIDE THIS METHOD
+
+	{name} (required)
+	A name of the cache. An actual cache key SHOULD be created via
+	|Vital.System.Cache.Base.cache_key()| method thus {name} is not
+	required to be |String|.
+
+	{default} (optional)
+	A default value. It will be returned when no value is found in the
+	cache dictionary.
+
+set({name}, {value})		*Vital.System.Cache.Base.set()*
+
+	Save {value} into a cache dictionary as {name}.
+
+	VARIANTS MUST OVERRIDE THIS METHOD
+
+	{name} (required)
+	A name of the cache. An actual cache key SHOULD be created via
+	|Vital.System.Cache.Base.cache_key()| method thus {name} is not
+	required to be |String|.
+
+	{value} (required)
+	A value of the cache.
+
+keys()				*Vital.System.Cache.Base.keys()*
+
+	Return a list of cache keys
+
+	VARIANTS MUST OVERRIDE THIS METHOD
+
+remove({name})			*Vital.System.Cache.Base.remove()*
+
+	Remove {name} from a cache dictionary. It does nothing when the
+	specified {name} is not found in the cache.
+
+	VARIANTS MUST OVERRIDE THIS METHOD
+
+	{name} (required)
+	A name of the cache. An actual cache key will be created via
+	|Vital.System.Cache.Base.cache_key()| method thus {name} is not
+	required to be |String|.
+
+clear()				*Vital.System.Cache.Base.clear()*
+
+	Clear a cache dictionary.
+
+	VARIANTS MUST OVERRIDE THIS METHOD
+
+==============================================================================
+vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl

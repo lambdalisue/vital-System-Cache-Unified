@@ -1,0 +1,117 @@
+" Use vim-themis to execute this test
+let s:V = vital#of('vital')
+
+Describe System.Cache.Base
+  let s:C = s:V.import('System.Cache.Base')
+
+  Context .hash({str})
+    It should return an empty string if {str} is empty
+      let hash = s:C.hash('')
+      Assert Equals(hash, '')
+    End
+
+    It should return a substitution if the length of {str} is less than 150
+      let hash = s:C.hash('hello')
+      Assert Equals(hash, 'hello')
+
+      let hash = s:C.hash('foo:bar')
+      Assert Equals(hash, 'foo=-bar')
+
+      let hash = s:C.hash('foo/bar')
+      Assert Equals(hash, 'foo=+bar')
+
+      let hash = s:C.hash('foo\bar')
+      Assert Equals(hash, 'foo=+bar')
+    End
+
+    It should return a hash if the length of {str} is 150 or over
+      let obj = repeat('a', 200)
+      let hash = s:C.hash(obj)
+      Assert True(strlen(hash) < strlen(obj))
+    End
+  End
+
+  Context .new()
+    It should return an instance
+      let cache = s:C.new()
+      Assert IsDict(cache)
+      Assert KeyExists(cache, 'cache_key')
+      Assert KeyExists(cache, 'has')
+      Assert KeyExists(cache, 'get')
+      Assert KeyExists(cache, 'set')
+      Assert KeyExists(cache, 'keys')
+      Assert KeyExists(cache, 'remove')
+      Assert KeyExists(cache, 'clear')
+    End
+  End
+
+  Context instance
+    Before each
+      let cache = s:C.new()
+    End
+
+    Context .cache_key({str})
+      It should return an original string in default
+        let r = cache.cache_key('foo')
+        Assert Equals(r, 'foo')
+      End
+
+      It should return a substitution if the length of {str} is less than 150
+        let hash = cache.cache_key('hello')
+        Assert Equals(hash, 'hello')
+
+        let hash = cache.cache_key('foo:bar')
+        Assert Equals(hash, 'foo=-bar')
+
+        let hash = cache.cache_key('foo/bar')
+        Assert Equals(hash, 'foo=+bar')
+
+        let hash = cache.cache_key('foo\bar')
+        Assert Equals(hash, 'foo=+bar')
+      End
+
+      It should return a hash if the length of {str} is 150 or over
+        let obj = repeat('a', 200)
+        let hash = cache.cache_key(obj)
+        Assert True(strlen(hash) < strlen(obj))
+      End
+    End
+
+    Context .has({name})
+      It should throw an exception
+        Throws 'has({name}) is not implemented', cache.has('foo')
+      End
+    End
+
+    Context .get({name}[, {default}])
+      It should throw an exception
+        Throws 'get({name}[, {default}]) is not implemented', cache.get('foo')
+        Throws 'get({name}[, {default}]) is not implemented', cache.get('foo', 'foo')
+      End
+    End
+
+    Context .set({name}, {value})
+      It should throw an exception
+        Throws 'set({name}, {value}) is not implemented', cache.set('foo', 'foo')
+      End
+    End
+
+    Context .keys()
+      It should throw an exception
+        Throws 'keys() is not implemented', cache.keys()
+      End
+    End
+
+    Context .remove({name})
+      It should throw an exception
+        Throws 'remove({name}) is not implemented', cache.remove('foo')
+      End
+    End
+
+    Context .clear()
+      It should throw an exception
+        Throws 'clear() is not implemented', cache.clear()
+      End
+    End
+  End
+End

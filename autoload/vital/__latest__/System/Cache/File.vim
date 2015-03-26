@@ -71,7 +71,7 @@ function! s:cache.clear() abort " {{{
   call s:File.rmdir(self.cache_dir, 'r')
 endfunction " }}}
 function! s:cache.keys() abort " {{{
-  let keys = glob(s:Path.join(self.cache_dir, '*'), 0, 1)
+  let keys = split(glob(s:Path.join(self.cache_dir, '*'), 0), '\n')
   return map(keys, 'fnamemodify(v:val, ":t")')
 endfunction " }}}
 

@@ -159,7 +159,7 @@ NeoBundle 'lambdalisue/vital-System-Cache-Unified'
 VITALIZE
 ==============================================================================
 
-You can add required cache system as
+You can add required cache system as:
 
 ```vim
 :Vitalize . +System.Cache.Base
